@@ -21,9 +21,25 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
     - latitude
     - longitude
     """
+    reg_dates = pd.to_datetime(dataframe['rent_approval_date'], format="%Y-%m")
     dataframe = dataframe\
-        .drop(columns=['rent_approval_date', 'block', 'street_name', 'furnished', 'elevation', 'planning_area', 'region', 'latitude', 'longitude'])\
-        .replace({'flat_type': {'-': ' '}})
+        .assign(
+            year=reg_dates.dt.year,
+            month=reg_dates.dt.month,
+            flat_type=lambda df: df.flat_type.str.replace('-', ' ')
+        )\
+        .drop(columns=[
+            'rent_approval_date',
+            'town',
+            'block',
+            'street_name',
+            'furnished',
+            'elevation',
+            'planning_area',
+            'region',
+            # 'latitude',
+            # 'longitude'
+        ])
 
     return dataframe
 
