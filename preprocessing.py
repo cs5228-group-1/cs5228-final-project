@@ -74,6 +74,8 @@ def preprocess_v2(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Same as v1 with additional distance from the apartment
     to the closest existing MRTs.
+
+    Note: The current implementation is not optimal.
     """
     mrt_df = pd.read_csv(MRT_DATAFRAME_PATH)
     dataframe = preprocess_v1(dataframe)
@@ -83,4 +85,5 @@ def preprocess_v2(dataframe: pd.DataFrame) -> pd.DataFrame:
             axis=1,
             result_type="expand"
     )
+    dataframe = dataframe.drop(columns=['longitude', 'latitude'])
     return dataframe
