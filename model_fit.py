@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from preprocessing import preprocess_v1, preprocess_v2
 from catboost import CatBoostRegressor
 from sklearn.model_selection import train_test_split
@@ -6,7 +7,10 @@ from sklearn.model_selection import train_test_split
 
 RANDOM_SEED = 42
 
-train_df = pd.read_csv("./data/train.csv")
+# numpy random seed also applies to pandas functions
+np.random.seed(RANDOM_SEED)
+
+train_df = pd.read_csv("./data/train.csv").sample(frac=1.0)
 test_df = pd.read_csv("./data/test.csv")
 
 # choose preprocess steps

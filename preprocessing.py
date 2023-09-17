@@ -36,8 +36,7 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             'elevation',
             'planning_area',
             'region',
-        ])\
-        .sample(frac=1.0)
+        ])
 
     return dataframe
 
