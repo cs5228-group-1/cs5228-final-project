@@ -12,14 +12,13 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Drop the following attributes:
     - rent_approval_date
+    - town
     - block
     - street name
     - furnished
     - elevation
     - planning_area
     - region
-    - latitude
-    - longitude
     """
     reg_dates = pd.to_datetime(dataframe['rent_approval_date'], format="%Y-%m")
     dataframe = dataframe\
@@ -37,9 +36,6 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             'elevation',
             'planning_area',
             'region',
-            # 'latitude',
-            # 'longitude'
-        ])
         ])\
         .sample(frac=1.0)
 
