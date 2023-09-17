@@ -40,6 +40,8 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             # 'latitude',
             # 'longitude'
         ])
+        ])\
+        .sample(frac=1.0)
 
     return dataframe
 
