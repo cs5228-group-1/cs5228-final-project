@@ -3,18 +3,24 @@ from preprocessing import preprocess_v1, preprocess_v2
 from catboost import CatBoostRegressor
 from sklearn.model_selection import train_test_split
 
+
+RANDOM_SEED = 42
+
 train_df = pd.read_csv("./data/train.csv")
 test_df = pd.read_csv("./data/test.csv")
 
+# choose preprocess steps
+preprocess_func = preprocess_v2
+
 # Data preprocessing
-train_df, val_df = train_test_split(preprocess_v2(train_df), test_size=0.1)
+train_df, val_df = train_test_split(preprocess_func(train_df), test_size=0.1)
 targets = train_df.monthly_rent
 train_df = train_df.drop(columns="monthly_rent")
 
 val_targets = val_df.monthly_rent
 val_df = val_df.drop(columns="monthly_rent")
 
-test_df = preprocess_v2(test_df)
+test_df = preprocess_func(test_df)
 
 cat_features = [
     # 'town',
@@ -28,6 +34,7 @@ cat_features_ids = [idx for idx in range(len(train_df.columns)) if train_df.colu
 trainer = CatBoostRegressor(
     learning_rate=0.1,
     iterations=2000,
+    random_seed=RANDOM_SEED,
     od_type="Iter", od_wait=40
 )
 trainer.fit(
