@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
-from preprocessing import preprocess_v1, preprocess_v2
+from preprocessing import preprocess_v1, preprocess_v2, preprocess_v3
 from catboost import CatBoostRegressor
 from sklearn.model_selection import train_test_split
 
 
 RANDOM_SEED = 42
+SUBMISSION_FILE = "submission_v3.csv"
 
 # numpy random seed also applies to pandas functions
 np.random.seed(RANDOM_SEED)
@@ -14,7 +15,7 @@ train_df = pd.read_csv("./data/train.csv").sample(frac=1.0)
 test_df = pd.read_csv("./data/test.csv")
 
 # choose preprocess steps
-preprocess_func = preprocess_v2
+preprocess_func = preprocess_v3
 
 # Data preprocessing
 train_df, val_df = train_test_split(preprocess_func(train_df), test_size=0.1)
@@ -24,22 +25,25 @@ train_df = train_df.drop(columns="monthly_rent")
 val_targets = val_df.monthly_rent
 val_df = val_df.drop(columns="monthly_rent")
 
-test_df = preprocess_func(test_df)
+floor_area_sqm = test_df.floor_area_sqm.copy()
+test_df = preprocess_func(test_df).drop(columns="monthly_rent", errors='ignore')
 
 cat_features = [
     # 'town',
     'flat_type',
     'flat_model',
     'subzone',
-    'nearest_mrt_code'
+    'nearest_mrt_code',
+    'nearest_mall_name'
 ]
 cat_features_ids = [idx for idx in range(len(train_df.columns)) if train_df.columns[idx] in cat_features]
 
 trainer = CatBoostRegressor(
-    learning_rate=0.1,
+    learning_rate=0.05,
     iterations=2000,
     random_seed=RANDOM_SEED,
-    od_type="Iter", od_wait=40
+    l2_leaf_reg=30.0,
+    od_type="IncToDec", od_wait=20
 )
 trainer.fit(
     train_df, targets,
@@ -54,7 +58,7 @@ submission_df = pd.DataFrame(
         'Predicted': predictions
     }
 )
-submission_df.to_csv("submission_v1.csv", index=False)
+submission_df.to_csv(SUBMISSION_FILE, index=False)
 
 
 
