@@ -6,3 +6,4 @@ scikit-learn
 catboost
 visidata
 pandarallel
+jupyterlab

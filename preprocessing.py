@@ -39,18 +39,24 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             'planning_area',
             'region',
         ])
+    if "monthly_rent" in dataframe.columns:
+        attr_cols = list(dataframe.columns.drop("monthly_rent"))
+        dataframe = dataframe.groupby(attr_cols).mean().reset_index()
 
     return dataframe
 
 
-def great_circle_distance(
-        lat1: float, lng1: float,
-        lat2: float, lng2: float) -> float:
-    R = 3963.0
-    lat1, lng1 = np.deg2rad(lat1), np.deg2rad(lng1)
-    lat2, lng2 = np.deg2rad(lat2), np.deg2rad(lng2)
-    return R * arccos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lng1 - lng2))
+def great_circle_distance(lat1, lon1, lat2, lon2):
+    r = 6371 # km
+    p = np.pi / 180
+    dlat = np.deg2rad(lat2 - lat1)
+    dlon = np.deg2rad(lon2 - lon1)
+    lat1, lng1 = np.deg2rad(lat1), np.deg2rad(lon1)
+    lat2, lng2 = np.deg2rad(lat2), np.deg2rad(lon2)
+    a = np.sin(dlat/2.0) ** 2.0 + np.cos(lat1) * np.cos(lat2) * (np.sin(dlon/2)**2.0)
+    return 2 * r * np.arctan2(np.sqrt(a),np.sqrt(1.0 - a))
 
+    
 
 def distance_to_nearest_place(row, df, code_col):
     """
