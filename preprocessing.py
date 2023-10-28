@@ -39,9 +39,6 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             'planning_area',
             'region',
         ])
-    if "monthly_rent" in dataframe.columns:
-        attr_cols = list(dataframe.columns.drop("monthly_rent"))
-        dataframe = dataframe.groupby(attr_cols).mean().reset_index()
 
     return dataframe
 
