@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from preprocessing import preprocess_v1, preprocess_v2, preprocess_v3
+from preprocessing import preprocess_v1, preprocess_v2, preprocess_v3, preprocess_v4
 from catboost import CatBoostRegressor
 from sklearn.model_selection import train_test_split
 
@@ -30,19 +30,24 @@ test_df = preprocess_func(test_df).drop(columns="monthly_rent", errors='ignore')
 
 cat_features = [
     # 'town',
+    'block',
     'flat_type',
     'flat_model',
     'subzone',
     'nearest_mrt_code',
-    'nearest_mall_name'
+    'nearest_mall_name',
+    'nearest_school_name',
 ]
-cat_features_ids = [idx for idx in range(len(train_df.columns)) if train_df.columns[idx] in cat_features]
+cat_features_ids = [idx for idx in range(len(train_df.columns))
+                    if train_df.columns[idx] in cat_features]
 
 trainer = CatBoostRegressor(
     learning_rate=0.05,
-    iterations=2000,
+    iterations=3000,
     random_seed=RANDOM_SEED,
-    l2_leaf_reg=30.0,
+    l2_leaf_reg=50.0,
+    depth=5,
+    langevin=True,
     od_type="IncToDec", od_wait=20
 )
 trainer.fit(

@@ -7,6 +7,7 @@ pandarallel.initialize(progress_bar=True)
 
 MRT_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-mrt-existing-stations.csv"
 SHOPPING_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-shopping-malls.csv"
+SCHOOL_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-primary-schools.csv"
 POSITION_ATTRS = ['latitude', 'longitude']
 
 
@@ -25,14 +26,14 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
     reg_dates = pd.to_datetime(dataframe['rent_approval_date'], format="%Y-%m")
     dataframe = dataframe\
         .assign(
-            year=reg_dates.dt.year - reg_dates.dt.year.min(),
+            year=reg_dates.dt.year,
             month=reg_dates.dt.month,
             flat_type=lambda df: df.flat_type.str.replace('-', ' '),
+            floor_area_sqm=lambda df: np.sqrt(df.floor_area_sqm.values)
         )\
         .drop(columns=[
             'rent_approval_date',
             'town',
-            'block',
             'street_name',
             'furnished',
             'elevation',
@@ -95,7 +96,6 @@ def preprocess_v3(dataframe: pd.DataFrame) -> pd.DataFrame:
     Same as v2 with additional distance from the apartment
     to the closest existing shopping malls.
 
-    Note: The current implementation is not optimal.
     """
     dataframe = preprocess_v1(dataframe)
 
@@ -114,4 +114,23 @@ def preprocess_v3(dataframe: pd.DataFrame) -> pd.DataFrame:
             axis=1,
             result_type="expand"
     )
+    return dataframe
+
+
+def preprocess_v4(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Same as v3 with additional distance from the apartment
+    to the closest existing primary schools
+
+    """
+    dataframe = preprocess_v3(dataframe)
+
+    school_df = pd.read_csv(SCHOOL_DATAFRAME_PATH).drop_duplicates(POSITION_ATTRS)
+    dataframe[['nearest_school_dist', 'nearest_school_name']] = \
+        dataframe.parallel_apply(
+            lambda row: distance_to_nearest_place(row, school_df, 'name'),
+            axis=1,
+            result_type="expand"
+    )
+    dataframe = dataframe.drop(columns=['nearest_school_name'])
     return dataframe
