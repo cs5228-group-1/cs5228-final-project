@@ -8,3 +8,4 @@ visidata
 pandarallel
 jupyterlab
 ipywidgets
+hyperopt
