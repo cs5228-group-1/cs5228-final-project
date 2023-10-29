@@ -126,7 +126,7 @@ class V2(TransformBase):
         self.v1 = V1(cfg)
         self.mrt_df = pd.read_csv(
             Path(cfg["datadir"]) / MRT_DATAFRAME_PATH
-        )
+        ).drop_duplicates(POSITION_ATTRS)
 
     def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe = self.v1.apply(dataframe)
@@ -147,23 +147,13 @@ class V3(TransformBase):
 
     def __init__(self, cfg):
         super(V3, self).__init__(cfg)
-        self.v1 = V1(cfg)
-        self.mrt_df = pd.read_csv(
-            Path(cfg["datadir"]) / MRT_DATAFRAME_PATH
-        )
+        self.v2 = V2(cfg)
         self.mall_df = pd.read_csv(
             Path(cfg["datadir"]) / SHOPPING_DATAFRAME_PATH
         ).drop_duplicates(POSITION_ATTRS)
 
     def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-        dataframe = self.v1.apply(dataframe)
-
-        dataframe[['nearest_mrt_dist', 'nearest_mrt_code']] = \
-            dataframe.parallel_apply(
-                lambda row: distance_to_nearest_place(row, self.mrt_df, 'code'),
-                axis=1,
-                result_type="expand"
-        )
+        dataframe = self.v2.apply(dataframe)
 
         dataframe[['nearest_mall_dist', 'nearest_mall_name']] = \
             dataframe.parallel_apply(
@@ -184,9 +174,6 @@ class V4(TransformBase):
     def __init__(self, cfg):
         super(V4, self).__init__(cfg)
         self.v3 = V3(cfg)
-        self.mrt_df = pd.read_csv(
-            Path(cfg["datadir"]) / MRT_DATAFRAME_PATH
-        )
         self.school_df = pd.read_csv(
             Path(cfg["datadir"]) / SCHOOL_DATAFRAME_PATH
         ).drop_duplicates(POSITION_ATTRS)
