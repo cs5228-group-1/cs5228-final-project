@@ -3,10 +3,13 @@ import numpy as np
 from preprocessing import preprocess_v1, preprocess_v2, preprocess_v3, preprocess_v4
 from catboost import CatBoostRegressor
 from sklearn.model_selection import train_test_split
+from path import Path
 
 
 RANDOM_SEED = 42
-SUBMISSION_FILE = "submission_v3.csv"
+
+SUBMISSION_FILE = Path("./submissions/") / "submission_v4.csv"
+preprocess_func = preprocess_v4
 
 # numpy random seed also applies to pandas functions
 np.random.seed(RANDOM_SEED)
@@ -15,7 +18,6 @@ train_df = pd.read_csv("./data/train.csv").sample(frac=1.0)
 test_df = pd.read_csv("./data/test.csv")
 
 # choose preprocess steps
-preprocess_func = preprocess_v3
 
 # Data preprocessing
 train_df, val_df = train_test_split(preprocess_func(train_df), test_size=0.1)
@@ -29,7 +31,7 @@ floor_area_sqm = test_df.floor_area_sqm.copy()
 test_df = preprocess_func(test_df).drop(columns="monthly_rent", errors='ignore')
 
 cat_features = [
-    # 'town',
+    'street_name',
     'block',
     'flat_type',
     'flat_model',
@@ -43,12 +45,13 @@ cat_features_ids = [idx for idx in range(len(train_df.columns))
 
 trainer = CatBoostRegressor(
     learning_rate=0.05,
-    iterations=3000,
+    iterations=5000,
     random_seed=RANDOM_SEED,
     l2_leaf_reg=50.0,
     depth=5,
-    langevin=True,
-    od_type="IncToDec", od_wait=20
+    langevin=False,
+    od_type="IncToDec", od_wait=20, od_pval=1e-3,
+    verbose=200
 )
 trainer.fit(
     train_df, targets,
@@ -64,6 +67,7 @@ submission_df = pd.DataFrame(
     }
 )
 submission_df.to_csv(SUBMISSION_FILE, index=False)
+print(f"Save submission to {SUBMISSION_FILE}")
 
 
 

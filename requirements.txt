@@ -9,3 +9,4 @@ pandarallel
 jupyterlab
 ipywidgets
 hyperopt
+path

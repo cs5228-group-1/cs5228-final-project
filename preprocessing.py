@@ -9,6 +9,11 @@ MRT_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-mrt-existing-station
 SHOPPING_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-shopping-malls.csv"
 SCHOOL_DATAFRAME_PATH = "data/auxiliary-data/auxiliary-data/sg-primary-schools.csv"
 POSITION_ATTRS = ['latitude', 'longitude']
+TARGET_ATTR = 'monthly_rent'
+
+
+def is_train_set(dataframe):
+    return TARGET_ATTR in dataframe.columns
 
 
 def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -16,7 +21,6 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
     Drop the following attributes:
     - rent_approval_date
     - town
-    - block
     - street name
     - furnished
     - elevation
@@ -29,14 +33,15 @@ def preprocess_v1(dataframe: pd.DataFrame) -> pd.DataFrame:
             year=reg_dates.dt.year,
             month=reg_dates.dt.month,
             flat_type=lambda df: df.flat_type.str.replace('-', ' '),
-            floor_area_sqm=lambda df: np.sqrt(df.floor_area_sqm.values)
+            floor_area_sqm=lambda df: np.sqrt(df.floor_area_sqm.values),
+            block=lambda df: df.town + "-" + df.block,
+            street_name=lambda df: df.street_name.str.lower()
         )\
         .drop(columns=[
             'rent_approval_date',
-            'town',
-            'street_name',
             'furnished',
             'elevation',
+            'town',
             'planning_area',
             'region',
         ])
@@ -53,7 +58,6 @@ def great_circle_distance(lat1, lon1, lat2, lon2):
     lat2, lng2 = np.deg2rad(lat2), np.deg2rad(lon2)
     a = np.sin(dlat/2.0) ** 2.0 + np.cos(lat1) * np.cos(lat2) * (np.sin(dlon/2)**2.0)
     return 2 * r * np.arctan2(np.sqrt(a),np.sqrt(1.0 - a))
-
     
 
 def distance_to_nearest_place(row, df, code_col):
