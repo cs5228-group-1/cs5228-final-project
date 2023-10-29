@@ -23,7 +23,8 @@ param_space = {
 
 
 def fit_and_predict(cfg: Dict):
-    submission_file = Path(cfg["outdir"]) / Path(cfg["output"])
+    submission_name = Path(cfg["output"]).stem + "_param_search.csv"
+    submission_file = Path(cfg["outdir"]) / submission_name
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
