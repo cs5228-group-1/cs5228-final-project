@@ -6,7 +6,6 @@
 # website: http://jupyter.org/
 
 catboost_info/**
-submissions/**
 data/**
 
 .ipynb_checkpoints
