@@ -3,7 +3,6 @@ import numpy as np
 from preprocessing import cat_attr_to_id, TARGET_ATTR
 from common import RANDOM_SEED, PREPROCESSORS, N_FOLDS
 from catboost import CatBoostRegressor
-from sklearn.model_selection import train_test_split
 from path import Path
 import typer
 from omegaconf import OmegaConf
