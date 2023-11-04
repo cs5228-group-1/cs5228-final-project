@@ -34,3 +34,9 @@ All configuration related to the training is defined in a YAML file. Below are p
 - `l2_leaf_reg`: Regularization tern in each leaf.
 - `langevin`: (true/false) whether to enable Stochastic Gradient Langevin Boosting.
 - `logging_level`: string or number: logging level or number of iterations to output logs.
+
+To run model training:
+
+```bash
+python model_fit.py <config-file>
+```
