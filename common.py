@@ -1,4 +1,4 @@
-from preprocessing import V1, V2, V3, V4
+from preprocessing import V1, V2, V3, V4, V5
 RANDOM_SEED = 42
 
 PREPROCESSORS = {
@@ -6,4 +6,5 @@ PREPROCESSORS = {
     'V2': V2,
     'V3': V3,
     'V4': V4,
+    'V5': V5,
 }
