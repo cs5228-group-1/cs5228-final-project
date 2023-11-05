@@ -1,0 +1,10 @@
+preprocess: V5
+output: "setting_5.csv"
+datadir: "data"
+outdir: "submissions"
+learning_rate: 0.05
+iterations: 5000
+l2_leaf_reg: 50.0
+depth: 5
+langevin: false
+logging_level: 200
