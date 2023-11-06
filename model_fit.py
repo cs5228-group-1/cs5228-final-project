@@ -137,6 +137,10 @@ def fit_and_predict_rf(cfg: Dict):
 
     #print(f"Mean: {np.mean(scores)}, std dev: {np.std(scores)}")
 
+    features, feature_importances = transformer.get_feature_names_out(), rf.feature_importances_
+    feat_imp_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
+    feat_imp_df = feat_imp_df.sort_values(by='Importance', ascending=False)
+
     predictions = rf.predict(test_df)
     submission_df = pd.DataFrame(
         {
@@ -148,7 +152,9 @@ def fit_and_predict_rf(cfg: Dict):
     print(f"Save submission to {submission_file}")
 
     df = pd.DataFrame(gsearch.cv_results_)
-    df.to_excel("rf_cv_results_.xlsx", index=False)
+    with pd.ExcelWriter("rf_results_.xlsx") as writer:
+        df.to_excel(writer, sheet_names='CV_results', index=False)
+        feat_imp_df.to_excel(writer, sheet_names='Feat_imp', index=False)
 
 def main(
         config_path: Path = typer.Argument(
