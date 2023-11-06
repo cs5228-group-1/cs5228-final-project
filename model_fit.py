@@ -110,10 +110,10 @@ def fit_and_predict_rf(cfg: Dict):
     # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
 
     param_grid = {
-        "n_estimators": [500],
-        "max_depth": [15,20,25],
+        "n_estimators": [1000],
+        "max_depth": [15,20],
         #"min_samples_split": [2,3],
-        "min_samples_leaf": [5,7],
+        "min_samples_leaf": [10],
     }
 
     gsearch = GridSearchCV(estimator=model,
@@ -153,8 +153,8 @@ def fit_and_predict_rf(cfg: Dict):
 
     df = pd.DataFrame(gsearch.cv_results_)
     with pd.ExcelWriter("rf_results_.xlsx") as writer:
-        df.to_excel(writer, sheet_names='CV_results', index=False)
-        feat_imp_df.to_excel(writer, sheet_names='Feat_imp', index=False)
+        df.to_excel(writer, sheet_name='CV_results', index=False)
+        feat_imp_df.to_excel(writer, sheet_name='Feat_imp', index=False)
 
 def main(
         config_path: Path = typer.Argument(

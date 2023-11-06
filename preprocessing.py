@@ -224,7 +224,7 @@ class V5(TransformBase):
                 'region',
             ])
         dataframe['date'] = \
-            dataframe.apply(
+            dataframe.parallel_apply(
                 lambda row: row['year'] + row['month'] * 12,
                 axis=1
             )
@@ -236,7 +236,7 @@ class V5(TransformBase):
         dataframe = dataframe.drop(columns=['year', 'month'])\
             .reset_index(drop=True)
         dataframe[['nearest_mrt_dist', 'nearest_mrt_code']] = \
-            dataframe.apply(
+            dataframe.parallel_apply(
                 lambda row: distance_to_nearest_place(row, self.mrt_df, 'code'),
                 axis=1,
                 result_type="expand"
