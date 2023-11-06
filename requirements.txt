@@ -12,3 +12,4 @@ hyperopt
 path
 typer
 omegaconf
+category_encoders

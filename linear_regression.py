@@ -9,6 +9,7 @@ from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split, cross_val_score, KFold, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from category_encoders.cat_boost import CatBoostEncoder
 from path import Path
 import typer
 from omegaconf import OmegaConf
@@ -16,10 +17,12 @@ from typing import Dict
 
 # numpy random seed also applies to pandas functions
 np.random.seed(RANDOM_SEED)
+sklearn.set_config(transform_output="pandas")
+
 
 def fit_and_predict(cfg: Dict):
     submission_file = Path(cfg["outdir"]) / "linear" / Path(cfg["output"])
-    Path(submission_file.parent[0]).makedirs_p()
+    Path(submission_file.parent).makedirs_p()
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
@@ -37,38 +40,35 @@ def fit_and_predict(cfg: Dict):
     categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
 
     transformer = make_column_transformer(
-        (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
+        # (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
+        (CatBoostEncoder(), categorical_feats),
         remainder='passthrough'
     )
 
-    train = transformer.fit_transform(train_df)
+    train = transformer.fit_transform(train_df, targets)
     train_df = pd.DataFrame(train, columns=transformer.get_feature_names_out())
     test = transformer.transform(test_df)
     test_df = pd.DataFrame(test, columns=transformer.get_feature_names_out())
 
+    model = Ridge(random_state=RANDOM_SEED)
 
+    param_grid = {
+        "alpha": [1e-2, 1e-1, 1e0, 1e1, 1e2],
+        "solver": ["svd", "cholesky", "sparse_cg", "sag"]
+    }
 
-    # param_grid = {
-    #     "n_estimators": [1000],
-    #     "max_depth": [15,20],
-    #     #"min_samples_split": [2,3],
-    #     "min_samples_leaf": [10],
-    # }
+    gsearch = GridSearchCV(estimator=model,
+                           param_grid=param_grid,
+                           scoring="neg_root_mean_squared_error",
+                           n_jobs=-1,
+                           refit=True,
+                           cv=10)
 
-    # gsearch = GridSearchCV(estimator=model,
-    #                        param_grid=param_grid,
-    #                        scoring="neg_root_mean_squared_error",
-    #                        n_jobs=-1,
-    #                        refit=True,
-    #                        cv=10)
-    #
-    # gsearch.fit(train_df, targets)
-    # print(f"Best score: {gsearch.best_score_}")
-    # print(f"Best params: {gsearch.best_params_}")
+    gsearch.fit(train_df, targets)
+    print(f"Best score: {gsearch.best_score_}")
+    print(f"Best params: {gsearch.best_params_}")
 
-    # rf = gsearch.best_estimator_
-    # with sklearn.config_context(assume_finite=True):
-    model = Ridge(alpha=1e-9, random_state=RANDOM_SEED, solver="cholesky")
+    model = gsearch.best_estimator_
     score = cross_val_score(model, train_df, targets, scoring="neg_root_mean_squared_error", cv=10, n_jobs=-1)
     print(f"CV score: {score}")
 
@@ -82,7 +82,7 @@ def fit_and_predict(cfg: Dict):
     # feat_imp_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
     # feat_imp_df = feat_imp_df.sort_values(by='Importance', ascending=False)
 
-    model.fit(train_df)
+    model.fit(train_df, targets)
     predictions = model.predict(test_df)
     submission_df = pd.DataFrame(
         {
