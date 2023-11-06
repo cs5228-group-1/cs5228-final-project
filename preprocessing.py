@@ -224,8 +224,13 @@ class V5(TransformBase):
                 'region',
             ])
         dataframe['date'] = \
-            dataframe.apply(
+            dataframe['date'].apply(
                 lambda row: row['year'] + row['month'] * 12,
+                axis=1
+            )
+        dataframe['age'] = \
+            dataframe['age'].apply(
+                lambda row: row['year'] - row['lease_commence_date'],
                 axis=1
             )
         dataframe = dataframe.drop(columns=['year', 'month'])\
@@ -248,5 +253,5 @@ class V5(TransformBase):
                 axis=1,
                 result_type="expand"
         )
-        dataframe.drop(columns=['latitude', 'longitude'], inplace=True)
+        dataframe.drop(columns=['latitude', 'longitude', 'lease_commence_date'], inplace=True)
         return dataframe
