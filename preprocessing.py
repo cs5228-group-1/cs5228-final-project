@@ -254,4 +254,5 @@ class V5(TransformBase):
                 result_type="expand"
         )
         dataframe.drop(columns=['latitude', 'longitude', 'lease_commence_date'], inplace=True)
+
         return dataframe

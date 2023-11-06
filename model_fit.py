@@ -3,7 +3,7 @@ import numpy as np
 from preprocessing import cat_attr_to_id
 from common import RANDOM_SEED, PREPROCESSORS
 from catboost import CatBoostRegressor
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, cross_val_score, KFold, GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -89,12 +89,18 @@ def fit_and_predict_rf(cfg: Dict):
     # print(train_df.iloc[:5,6:12])
     # print(train_df.iloc[:5,12:])
 
-    #numerical_feats = train_df.select_dtypes(include=['float64']).columns
-    categorical_feats = train_df.select_dtypes(include=['object']).columns
+    #numerical_feats = train_df.select_dtypes(include=['float64', 'int64']).columns
+    categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
 
-    onehotencoder = OneHotEncoder(handle_unknown='ignore')
-    train_df = onehotencoder.fit_transform(train_df[categorical_feats])
-    test_df = onehotencoder.transform(test_df[categorical_feats])
+    transformer = make_column_transformer(
+        (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
+        remainder='passthrough'
+    )
+    #print(f"train df {train_df.iloc[0,:]}")
+    train = transformer.fit_transform(train_df)
+    train_df = pd.DataFrame(train, columns=transformer.get_feature_names_out())
+    test = transformer.transform(test_df)
+    test_df = pd.DataFrame(test, columns=transformer.get_feature_names_out())
 
     # t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
     # col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
@@ -104,7 +110,7 @@ def fit_and_predict_rf(cfg: Dict):
     # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
 
     param_grid = {
-        "n_estimators": [500, 1000],
+        "n_estimators": [500],
         "max_depth": [15,20,25],
         #"min_samples_split": [2,3],
         "min_samples_leaf": [5,7],
