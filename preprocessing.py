@@ -204,7 +204,6 @@ class V5(TransformBase):
         ).drop_duplicates(POSITION_ATTRS)
 
     def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-        EARLIEST_YEAR = 2021
         reg_dates = pd.to_datetime(
             dataframe['rent_approval_date'], format="%Y-%m")
         dataframe = dataframe\
@@ -223,10 +222,12 @@ class V5(TransformBase):
                 'elevation',
                 'subzone',
                 'region',
-            ])\
-            .sort_values(['year', 'month'])
-        year_start = (dataframe.year[0] - EARLIEST_YEAR) * 12
-        dataframe['date'] = range(year_start + 1, len(dataframe) + year_start + 1)
+            ])
+        dataframe['date'] = \
+            dataframe.apply(
+                lambda row: row['year'] + row['month'] * 12,
+                axis=1
+            )
         dataframe = dataframe.drop(columns=['year', 'month'])\
             .reset_index(drop=True)
         dataframe[['nearest_mrt_dist', 'nearest_mrt_code']] = \
