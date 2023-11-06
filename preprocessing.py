@@ -224,12 +224,12 @@ class V5(TransformBase):
                 'region',
             ])
         dataframe['date'] = \
-            dataframe['date'].apply(
+            dataframe.apply(
                 lambda row: row['year'] + row['month'] * 12,
                 axis=1
             )
         dataframe['age'] = \
-            dataframe['age'].apply(
+            dataframe.apply(
                 lambda row: row['year'] - row['lease_commence_date'],
                 axis=1
             )
