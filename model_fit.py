@@ -92,33 +92,37 @@ def fit_and_predict_rf(cfg: Dict):
     #numerical_feats = train_df.select_dtypes(include=['float64']).columns
     categorical_feats = train_df.select_dtypes(include=['object']).columns
 
-    t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
-    col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
+    onehotencoder = OneHotEncoder(handle_unknown='ignore')
+    train_df = onehotencoder.fit_transform(train_df[categorical_feats])
+    test_df = onehotencoder.transform(test_df[categorical_feats])
 
-    model = RandomForestRegressor()
+    # t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
+    # col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
 
-    pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
+    model = RandomForestRegressor(n_jobs=-1)
+
+    # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
 
     param_grid = {
-        "model__n_estimators": [1000],
-        "model__max_depth": [8, 20, None],
+        "n_estimators": [500, 1000],
+        "max_depth": [15,20,25],
         #"min_samples_split": [2,3],
-        "model__min_samples_leaf": [1,2],
+        "min_samples_leaf": [5,7],
     }
 
-    gsearch = GridSearchCV(estimator=pipeline,
+    gsearch = GridSearchCV(estimator=model,
                            param_grid=param_grid,
                            scoring="neg_root_mean_squared_error",
                            n_jobs=-1,
                            refit=True,
-                           cv=5)
+                           cv=10)
 
     gsearch.fit(train_df, targets)
     print(f"Best score: {gsearch.best_score_}")
     print(f"Best params: {gsearch.best_params_}")
 
     rf = gsearch.best_estimator_
-    score = cross_val_score(rf, train_df, targets, scoring="neg_root_mean_squared_error", cv=5)
+    score = cross_val_score(rf, train_df, targets, scoring="neg_root_mean_squared_error", cv=10)
     print(f"CV score: {score}")
 
     #cv = KFold(n_splits=2, shuffle=True, random_state=42)
