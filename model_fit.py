@@ -101,7 +101,7 @@ def fit_and_predict_rf(cfg: Dict):
 
     param_grid = {
         "model__n_estimators": [1000],
-        "model__max_depth": [8, 20, None],
+        "model__max_depth": [6],
         #"min_samples_split": [2,3],
         "model__min_samples_leaf": [1,2],
     }
@@ -111,14 +111,14 @@ def fit_and_predict_rf(cfg: Dict):
                            scoring="neg_root_mean_squared_error",
                            n_jobs=-1,
                            refit=True,
-                           cv=5)
+                           cv=10)
 
     gsearch.fit(train_df, targets)
     print(f"Best score: {gsearch.best_score_}")
     print(f"Best params: {gsearch.best_params_}")
 
     rf = gsearch.best_estimator_
-    score = cross_val_score(rf, train_df, targets, scoring="neg_root_mean_squared_error", cv=5)
+    score = cross_val_score(rf, train_df, targets, scoring="neg_root_mean_squared_error", cv=10)
     print(f"CV score: {score}")
 
     #cv = KFold(n_splits=2, shuffle=True, random_state=42)
