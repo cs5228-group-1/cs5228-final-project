@@ -82,6 +82,7 @@ def fit_and_predict(cfg: Dict):
     # feat_imp_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
     # feat_imp_df = feat_imp_df.sort_values(by='Importance', ascending=False)
 
+    model.fit(train_df)
     predictions = model.predict(test_df)
     submission_df = pd.DataFrame(
         {
