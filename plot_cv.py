@@ -7,16 +7,18 @@ import pandas as pd
 from path import Path
 import matplotlib.pyplot as plt
 
-INPUT_DIR = Path("submissions")
 SETTING_LISTS = [
     f"setting_{idx}" for idx in range(1, 5)
 ]
 
 
-def main(output_path: Path = typer.Argument(..., exists=False, file_okay=True, writable=True, help="Output figure path", path_type=Path), 
-         model_name: str = typer.Argument(..., exists=False, help="Model Name")):
+def main(
+        input_dir: Path = typer.Argument(..., exists=True, dir_okay=True, readable=True, help="Input dir contains all cross validation results", path_type=Path), 
+        output_path: Path = typer.Argument(..., exists=False, file_okay=True, writable=True, help="Output figure path", path_type=Path), 
+        model_name: str = typer.Argument(..., exists=False, help="Model Name")):
+
     cross_validations = {
-        name: pd.read_csv(INPUT_DIR / f"{name}_cross_validation.csv")['val-rmse'].values
+        name: pd.read_csv(input_dir / f"{name}_cross_validation.csv")['val-rmse'].values
         for name in SETTING_LISTS
     }
 
