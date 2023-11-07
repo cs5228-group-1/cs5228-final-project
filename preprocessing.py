@@ -23,6 +23,7 @@ CATEGORY_FEATURE_NAMES = [
     'nearest_mrt_code',
     'nearest_mall_name',
     'nearest_school_name',
+    'planning_area'
 ]
 
 
@@ -187,4 +188,72 @@ class V4(TransformBase):
                 axis=1,
                 result_type="expand"
         )
+        return dataframe
+
+class V5(TransformBase):
+    def __init__(self, cfg):
+        super(V5, self).__init__(cfg)
+        self.mrt_df = pd.read_csv(
+            Path(cfg["datadir"]) / MRT_DATAFRAME_PATH
+        ).drop_duplicates(POSITION_ATTRS)
+        self.mall_df = pd.read_csv(
+            Path(cfg["datadir"]) / SHOPPING_DATAFRAME_PATH
+        ).drop_duplicates(POSITION_ATTRS)
+        self.school_df = pd.read_csv(
+            Path(cfg["datadir"]) / SCHOOL_DATAFRAME_PATH
+        ).drop_duplicates(POSITION_ATTRS)
+
+    def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        EARLIEST_YEAR = 2021
+        reg_dates = pd.to_datetime(
+            dataframe['rent_approval_date'], format="%Y-%m")
+        dataframe = dataframe\
+            .assign(
+                year=reg_dates.dt.year,
+                month=reg_dates.dt.month,
+                flat_type=lambda df: df.flat_type.str.replace('-', ' '),
+                floor_area_sqm=lambda df: np.sqrt(df.floor_area_sqm.values),
+            )\
+            .drop(columns=[  # keeping planning_area
+                'rent_approval_date',
+                'town',
+                'block',
+                'street_name',
+                'furnished',
+                'elevation',
+                'subzone',
+                'region',
+            ])
+        dataframe['date'] = \
+            dataframe.parallel_apply(
+                lambda row: (row['year'] - EARLIEST_YEAR) * 12 + row['month'],
+                axis=1
+            )
+        dataframe['age'] = \
+            dataframe.parallel_apply(
+                lambda row: row['year'] - row['lease_commence_date'],
+                axis=1
+            )
+        dataframe = dataframe.drop(columns=['year', 'month'])\
+            .reset_index(drop=True)
+        dataframe[['nearest_mrt_dist', 'nearest_mrt_code']] = \
+            dataframe.parallel_apply(
+                lambda row: distance_to_nearest_place(row, self.mrt_df, 'code'),
+                axis=1,
+                result_type="expand"
+        )
+        dataframe[['nearest_mall_dist', 'nearest_mall_name']] = \
+            dataframe.parallel_apply(
+                lambda row: distance_to_nearest_place(row, self.mall_df, 'name'),
+                axis=1,
+                result_type="expand"
+        )
+        dataframe[['nearest_school_dist', 'nearest_school_name']] = \
+            dataframe.parallel_apply(
+                lambda row: distance_to_nearest_place(row, self.school_df, 'name'),
+                axis=1,
+                result_type="expand"
+        )
+        dataframe.drop(columns=['latitude', 'longitude', 'lease_commence_date'], inplace=True)
+
         return dataframe
