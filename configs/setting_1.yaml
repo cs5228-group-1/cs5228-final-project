@@ -2,9 +2,15 @@ preprocess: V1
 output: "setting_1.csv"
 datadir: "data"
 outdir: "submissions"
+
+# catboost setting
 learning_rate: 0.05
 iterations: 5000
 l2_leaf_reg: 50.0
 depth: 5
 langevin: false
 logging_level: 200
+
+# linear regression
+alpha: [0.01, 0.1, 1, 10, 100]
+solver: ["svd", "cholesky", "sparse_cg", "sag"]

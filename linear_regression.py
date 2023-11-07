@@ -17,8 +17,10 @@ sklearn.set_config(transform_output="pandas")
 
 
 def fit_and_predict(cfg: Dict):
-    submission_file = Path(cfg["outdir"]) / "linear" / Path(cfg["output"])
-    Path(submission_file.parent).makedirs_p()
+    output = Path(cfg.output)
+    outdir = Path(cfg.outdir) / "linear"
+    outdir.makedirs_p()
+
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
@@ -36,7 +38,6 @@ def fit_and_predict(cfg: Dict):
     categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
 
     transformer = make_column_transformer(
-        # (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
         (CatBoostEncoder(), categorical_feats),
         remainder='passthrough'
     )
@@ -49,8 +50,8 @@ def fit_and_predict(cfg: Dict):
     model = Ridge(random_state=RANDOM_SEED)
 
     param_grid = {
-        "alpha": [1e-2, 1e-1, 1e0, 1e1, 1e2],
-        "solver": ["svd", "cholesky", "sparse_cg", "sag"]
+        "alpha": cfg.alpha,
+        "solver": cfg.solver
     }
 
     gsearch = GridSearchCV(estimator=model,
@@ -65,7 +66,9 @@ def fit_and_predict(cfg: Dict):
     print(f"Best params: {gsearch.best_params_}")
 
     model = gsearch.best_estimator_
-    score = cross_val_score(model, train_df, targets, scoring="neg_root_mean_squared_error", cv=10, n_jobs=-1)
+    score = cross_val_score(
+        model, train_df, targets,
+        scoring="neg_root_mean_squared_error", cv=10, n_jobs=-1)
     print(f"CV score: {score}")
 
     model.fit(train_df, targets)
@@ -76,8 +79,14 @@ def fit_and_predict(cfg: Dict):
             'Predicted': predictions
         }
     )
+    submission_file = outdir / output
     submission_df.to_csv(submission_file, index=False)
     print(f"Save submission to {submission_file}")
+
+    # save cross validation results
+    cv_results = pd.DataFrame(-score, columns=["val-rmse"])
+    cv_filename = output.stem + "_cross_validation.csv"
+    cv_results.to_csv(outdir / cv_filename, index=False)
 
 
 def main(
