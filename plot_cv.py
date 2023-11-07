@@ -13,7 +13,8 @@ SETTING_LISTS = [
 ]
 
 
-def main(output_path: Path = typer.Argument(..., exists=False, file_okay=True, writable=True, help="Output figure path", path_type=Path), model_name: str = typer.Argument(..., exists=False, help="Model Name")):
+def main(output_path: Path = typer.Argument(..., exists=False, file_okay=True, writable=True, help="Output figure path", path_type=Path), 
+         model_name: str = typer.Argument(..., exists=False, help="Model Name")):
     cross_validations = {
         name: pd.read_csv(INPUT_DIR / f"{name}_cross_validation.csv")['val-rmse'].values
         for name in SETTING_LISTS
