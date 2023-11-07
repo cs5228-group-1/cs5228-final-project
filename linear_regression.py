@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
-from common import RANDOM_SEED, PREPROCESSORS
+from common import (
+    RANDOM_SEED, PREPROCESSORS, N_FOLDS, 
+    create_submission_file, cross_validation_on_model
+)
 import sklearn
 from sklearn.compose import make_column_transformer
 from sklearn.linear_model import Ridge, LinearRegression
@@ -15,8 +18,11 @@ from typing import Dict
 np.random.seed(RANDOM_SEED)
 sklearn.set_config(transform_output="pandas")
 
+
 def fit_basic_and_predict(cfg: Dict):
-    submission_file = Path(cfg["outdir"]) / "basic_linear" / Path(cfg["output"])
+    output = Path(cfg.output)
+    outdir = Path(cfg.outdir) / "basic_linear"
+    submission_file = outdir / output
     Path(submission_file.parent).makedirs_p()
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
@@ -47,23 +53,11 @@ def fit_basic_and_predict(cfg: Dict):
 
     basic_model = LinearRegression()
     basic_model.fit(train_df, targets)
-    score = cross_val_score(basic_model, train_df, targets, scoring="neg_root_mean_squared_error", cv=10)
-    cv_results = pd.DataFrame(score, columns=["val-rmse"])*-1
-    cv_filename = submission_file.stem + "_cross_validation.csv"
-    cv_path = Path(cfg["outdir"]) / "basic_linear" / cv_filename
-    cv_results.to_csv(cv_path, index=False)
-    print(f"Saved cv score to {cv_path}")
+    create_submission_file(basic_model, test_df, submission_file)
 
-    predictions = basic_model.predict(test_df)
-    submission_df = pd.DataFrame(
-        {
-            'Id': list(range(len(test_df))),
-            'Predicted': predictions
-        }
-    )
-    submission_df.to_csv(submission_file, index=False)
-    print(f"Save submission to {submission_file}")
-
+    cv_filename = output.stem + "_cross_validation.csv"
+    cv_path = outdir / cv_filename
+    cross_validation_on_model(basic_model, train_df, targets, cv_path)
 
 
 def fit_and_predict(cfg: Dict):
@@ -122,27 +116,13 @@ def fit_and_predict(cfg: Dict):
     coeff_path = outdir / coeff_filename
     coeff_df.to_csv(coeff_path, index=False)
     print(f"coefficients saved to {coeff_path}")
-    score = cross_val_score(model, train_df, targets, scoring="neg_root_mean_squared_error", cv=10, n_jobs=-1)
-    print(f"CV score: {-score}")
 
-    model.fit(train_df, targets)
-    predictions = model.predict(test_df)
-    submission_df = pd.DataFrame(
-        {
-            'Id': list(range(len(test_df))),
-            'Predicted': predictions
-        }
-    )
     submission_file = outdir / output
-    submission_df.to_csv(submission_file, index=False)
-    print(f"Save submission to {submission_file}")
+    create_submission_file(model, test_df, submission_file)
 
-    # save cross validation results
-    cv_results = pd.DataFrame(-score, columns=["val-rmse"])
     cv_filename = output.stem + "_cross_validation.csv"
     cv_path = outdir / cv_filename
-    cv_results.to_csv(cv_path, index=False)
-    print(f"Saved cv score to {cv_path}")
+    cross_validation_on_model(model, train_df, targets, cv_path)
 
 
 def main(
