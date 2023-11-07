@@ -3,7 +3,7 @@ import numpy as np
 from preprocessing import cat_attr_to_id
 from common import RANDOM_SEED, PREPROCESSORS
 from catboost import CatBoostRegressor
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, cross_val_score, KFold, GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -35,12 +35,6 @@ def fit_and_predict(cfg: Dict):
 
     test_df = preprocess.apply(test_df)\
         .drop(columns="monthly_rent", errors='ignore')
-
-    print(train_df.info())
-    print(train_df.iloc[:5,:6])
-    print(train_df.iloc[:5,6:12])
-    print(train_df.iloc[:5,12:])
-    assert True==False, print("yo")
 
     trainer = CatBoostRegressor(
         learning_rate=cfg["learning_rate"],
@@ -89,24 +83,34 @@ def fit_and_predict_rf(cfg: Dict):
     # print(train_df.iloc[:5,6:12])
     # print(train_df.iloc[:5,12:])
 
-    #numerical_feats = train_df.select_dtypes(include=['float64']).columns
-    categorical_feats = train_df.select_dtypes(include=['object']).columns
+    #numerical_feats = train_df.select_dtypes(include=['float64', 'int64']).columns
+    categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
 
-    t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
-    col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
+    transformer = make_column_transformer(
+        (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
+        remainder='passthrough'
+    )
+    #print(f"train df {train_df.iloc[0,:]}")
+    train = transformer.fit_transform(train_df)
+    train_df = pd.DataFrame(train, columns=transformer.get_feature_names_out())
+    test = transformer.transform(test_df)
+    test_df = pd.DataFrame(test, columns=transformer.get_feature_names_out())
 
-    model = RandomForestRegressor()
+    # t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
+    # col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
 
-    pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
+    model = RandomForestRegressor(n_jobs=-1)
+
+    # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
 
     param_grid = {
         "model__n_estimators": [1000],
         "model__max_depth": [6],
         #"min_samples_split": [2,3],
-        "model__min_samples_leaf": [1,2],
+        "min_samples_leaf": [10],
     }
 
-    gsearch = GridSearchCV(estimator=pipeline,
+    gsearch = GridSearchCV(estimator=model,
                            param_grid=param_grid,
                            scoring="neg_root_mean_squared_error",
                            n_jobs=-1,
@@ -127,6 +131,10 @@ def fit_and_predict_rf(cfg: Dict):
 
     #print(f"Mean: {np.mean(scores)}, std dev: {np.std(scores)}")
 
+    features, feature_importances = transformer.get_feature_names_out(), rf.feature_importances_
+    feat_imp_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
+    feat_imp_df = feat_imp_df.sort_values(by='Importance', ascending=False)
+
     predictions = rf.predict(test_df)
     submission_df = pd.DataFrame(
         {
@@ -138,7 +146,9 @@ def fit_and_predict_rf(cfg: Dict):
     print(f"Save submission to {submission_file}")
 
     df = pd.DataFrame(gsearch.cv_results_)
-    df.to_excel("rf_cv_results_.xlsx", index=False)
+    with pd.ExcelWriter("rf_results_.xlsx") as writer:
+        df.to_excel(writer, sheet_name='CV_results', index=False)
+        feat_imp_df.to_excel(writer, sheet_name='Feat_imp', index=False)
 
 def main(
         config_path: Path = typer.Argument(
@@ -146,7 +156,7 @@ def main(
             help="Path to config file", path_type=Path
         )):
     cfg = OmegaConf.load(config_path)
-    fit_and_predict_rf(cfg)
+    fit_and_predict(cfg)
 
 
 if __name__ == "__main__":

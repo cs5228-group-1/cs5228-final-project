@@ -222,13 +222,21 @@ class V5(TransformBase):
                 'elevation',
                 'subzone',
                 'region',
-            ])\
-            .sort_values(['year', 'month'])
-        dataframe['date'] = range(1, len(dataframe) + 1)
+            ])
+        dataframe['date'] = \
+            dataframe.parallel_apply(
+                lambda row: row['year'] + row['month'] * 12,
+                axis=1
+            )
+        dataframe['age'] = \
+            dataframe.apply(
+                lambda row: row['year'] - row['lease_commence_date'],
+                axis=1
+            )
         dataframe = dataframe.drop(columns=['year', 'month'])\
             .reset_index(drop=True)
         dataframe[['nearest_mrt_dist', 'nearest_mrt_code']] = \
-            dataframe.apply(
+            dataframe.parallel_apply(
                 lambda row: distance_to_nearest_place(row, self.mrt_df, 'code'),
                 axis=1,
                 result_type="expand"
@@ -245,5 +253,6 @@ class V5(TransformBase):
                 axis=1,
                 result_type="expand"
         )
-        dataframe.drop(columns=['latitude', 'longitude'], inplace=True)
+        dataframe.drop(columns=['latitude', 'longitude', 'lease_commence_date'], inplace=True)
+
         return dataframe
