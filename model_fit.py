@@ -36,12 +36,6 @@ def fit_and_predict(cfg: Dict):
     test_df = preprocess.apply(test_df)\
         .drop(columns="monthly_rent", errors='ignore')
 
-    print(train_df.info())
-    print(train_df.iloc[:5,:6])
-    print(train_df.iloc[:5,6:12])
-    print(train_df.iloc[:5,12:])
-    assert True==False, print("yo")
-
     trainer = CatBoostRegressor(
         learning_rate=cfg["learning_rate"],
         iterations=cfg["iterations"],
@@ -162,7 +156,7 @@ def main(
             help="Path to config file", path_type=Path
         )):
     cfg = OmegaConf.load(config_path)
-    fit_and_predict_rf(cfg)
+    fit_and_predict(cfg)
 
 
 if __name__ == "__main__":
