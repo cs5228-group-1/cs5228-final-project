@@ -23,6 +23,7 @@ CATEGORY_FEATURE_NAMES = [
     'nearest_mrt_code',
     'nearest_mall_name',
     'nearest_school_name',
+    'planning_area'
 ]
 
 
