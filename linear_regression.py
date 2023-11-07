@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 from common import (
-    RANDOM_SEED, PREPROCESSORS, N_FOLDS, 
+    RANDOM_SEED, PREPROCESSORS,
     create_submission_file, cross_validation_on_model
 )
 import sklearn
 from sklearn.compose import make_column_transformer
 from sklearn.linear_model import Ridge, LinearRegression
-from sklearn.model_selection import cross_val_score, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from category_encoders.cat_boost import CatBoostEncoder
 from path import Path
 import typer
