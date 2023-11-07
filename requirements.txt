@@ -14,3 +14,4 @@ typer
 omegaconf
 openpyxl
 seaborn
+category_encoders

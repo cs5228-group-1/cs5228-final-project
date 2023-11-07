@@ -188,7 +188,6 @@ class V4(TransformBase):
                 axis=1,
                 result_type="expand"
         )
-        dataframe = dataframe.drop(columns=['nearest_school_name'])
         return dataframe
 
 class V5(TransformBase):
