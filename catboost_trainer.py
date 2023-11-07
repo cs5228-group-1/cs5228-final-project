@@ -3,11 +3,6 @@ import numpy as np
 from preprocessing import cat_attr_to_id, TARGET_ATTR
 from common import RANDOM_SEED, PREPROCESSORS, N_FOLDS
 from catboost import CatBoostRegressor
-from sklearn.compose import ColumnTransformer, make_column_transformer
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split, cross_val_score, KFold, GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
 from path import Path
 import typer
 from omegaconf import OmegaConf
@@ -20,7 +15,8 @@ np.random.seed(RANDOM_SEED)
 
 def cross_validation(cfg: Dict):
     output = Path(cfg.output)
-    outdir = Path(cfg.outdir)
+    outdir = Path(cfg.outdir) / "catboost"
+    outdir.makedirs_p()
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
@@ -68,7 +64,10 @@ def cross_validation(cfg: Dict):
 
 
 def fit_and_predict(cfg: Dict):
-    submission_file = Path(cfg["outdir"]) / Path(cfg["output"])
+    output = Path(cfg.output)
+    outdir = Path(cfg.outdir) / "catboost"
+    outdir.makedirs_p()
+    submission_file = outdir / output
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
@@ -110,93 +109,6 @@ def fit_and_predict(cfg: Dict):
     submission_df.to_csv(submission_file, index=False)
     print(f"Save submission to {submission_file}")
 
-def fit_and_predict_rf(cfg: Dict):
-    submission_file = Path(cfg["outdir"]) / Path(cfg["output"])
-    preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
-    datadir = Path(cfg["datadir"])
-
-    train_df = pd.read_csv(datadir / "train.csv")
-    test_df = pd.read_csv(datadir / "test.csv")
-
-    # Data preprocessing
-    train_df = preprocess.apply(train_df)
-    targets = train_df.monthly_rent
-    train_df = train_df.drop(columns="monthly_rent")
-
-    test_df = preprocess.apply(test_df)\
-        .drop(columns="monthly_rent", errors='ignore')
-
-    # print(train_df.info())
-    # print(train_df.iloc[:5,:6])
-    # print(train_df.iloc[:5,6:12])
-    # print(train_df.iloc[:5,12:])
-
-    #numerical_feats = train_df.select_dtypes(include=['float64', 'int64']).columns
-    categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
-
-    transformer = make_column_transformer(
-        (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
-        remainder='passthrough'
-    )
-    #print(f"train df {train_df.iloc[0,:]}")
-    train = transformer.fit_transform(train_df)
-    train_df = pd.DataFrame(train, columns=transformer.get_feature_names_out())
-    test = transformer.transform(test_df)
-    test_df = pd.DataFrame(test, columns=transformer.get_feature_names_out())
-
-    # t = [('cat', OneHotEncoder(handle_unknown='ignore'), categorical_feats)]
-    # col_transform = ColumnTransformer(transformers=t, remainder="passthrough")
-
-    model = RandomForestRegressor(n_jobs=-1)
-
-    # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
-
-    param_grid = {
-        "n_estimators": cfg['n_estimators'],
-        "max_depth": cfg['max_depth'],
-        #"min_samples_split": [2,3],
-        "min_samples_leaf": cfg['min_samples_leaf'],
-    }
-
-    gsearch = GridSearchCV(estimator=model,
-                           param_grid=param_grid,
-                           scoring="neg_root_mean_squared_error",
-                           n_jobs=-1,
-                           refit=True,
-                           cv=10)
-
-    gsearch.fit(train_df, targets)
-    print(f"Best score: {gsearch.best_score_}")
-    print(f"Best params: {gsearch.best_params_}")
-
-    rf = gsearch.best_estimator_
-    score = cross_val_score(rf, train_df, targets, scoring="neg_root_mean_squared_error", cv=10)
-    print(f"CV score: {score}")
-
-    #cv = KFold(n_splits=2, shuffle=True, random_state=42)
-
-    #scores = cross_val_score(pipeline, train_df, targets, scoring="neg_root_mean_squared_error", cv=cv, n_jobs=-1)
-
-    #print(f"Mean: {np.mean(scores)}, std dev: {np.std(scores)}")
-
-    features, feature_importances = transformer.get_feature_names_out(), rf.feature_importances_
-    feat_imp_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
-    feat_imp_df = feat_imp_df.sort_values(by='Importance', ascending=False)
-
-    predictions = rf.predict(test_df)
-    submission_df = pd.DataFrame(
-        {
-            'Id': list(range(len(test_df))),
-            'Predicted': predictions
-        }
-    )
-    submission_df.to_csv(submission_file, index=False)
-    print(f"Save submission to {submission_file}")
-
-    df = pd.DataFrame(gsearch.cv_results_)
-    with pd.ExcelWriter("rf_results_.xlsx") as writer:
-        df.to_excel(writer, sheet_name='CV_results', index=False)
-        feat_imp_df.to_excel(writer, sheet_name='Feat_imp', index=False)
 
 def main(
         config_path: Path = typer.Argument(

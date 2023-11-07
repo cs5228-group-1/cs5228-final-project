@@ -14,3 +14,8 @@ logging_level: 200
 # linear regression
 alpha: [0.01, 0.1, 1, 10, 100]
 solver: ["svd", "cholesky", "sparse_cg", "sag"]
+
+# random forests
+n_estimators: [300]
+max_depth: [25, 30]
+min_samples_leaf: [5, 7, 9]

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from common import (
-    RANDOM_SEED, PREPROCESSORS,
+    RANDOM_SEED, PREPROCESSORS, N_FOLDS,
     create_submission_file, cross_validation_on_model
 )
 import sklearn
@@ -22,8 +22,8 @@ sklearn.set_config(transform_output="pandas")
 def fit_basic_and_predict(cfg: Dict):
     output = Path(cfg.output)
     outdir = Path(cfg.outdir) / "basic_linear"
+    outdir.makedirs_p()
     submission_file = outdir / output
-    Path(submission_file.parent).makedirs_p()
     preprocess = PREPROCESSORS[cfg["preprocess"]](cfg)
     datadir = Path(cfg["datadir"])
 
@@ -104,7 +104,7 @@ def fit_and_predict(cfg: Dict):
                            scoring="neg_root_mean_squared_error",
                            n_jobs=-1,
                            refit=True,
-                           cv=10)
+                           cv=N_FOLDS)
 
     gsearch.fit(train_df, targets)
     print(f"Best score: {gsearch.best_score_}")

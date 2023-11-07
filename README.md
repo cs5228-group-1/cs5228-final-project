@@ -63,7 +63,17 @@ python linear_regression.py <config-file>
 Each config is a list of parameters for grid search to find the best settings.
 
 ## Random Forest Training
+
+```bash
+python random_forests.py <config-file>
+```
 ### Training Config
+
+- `n_estimators`: A list of number of estimators.
+- `max_depth`: A list of maximum depth of the tree.
+- `min_samples_leaf`: A list of minimum number of samples in leaves.
+
+Each config is a list of parameters for grid search to find the best settings.
 
 # Authors
 
