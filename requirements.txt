@@ -12,3 +12,5 @@ hyperopt
 path
 typer
 omegaconf
+openpyxl
+seaborn

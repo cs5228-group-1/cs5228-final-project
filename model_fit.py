@@ -110,10 +110,10 @@ def fit_and_predict_rf(cfg: Dict):
     # pipeline = Pipeline([('prep', col_transform), ('model', model)])  # param_grid 'model__' prefix
 
     param_grid = {
-        "n_estimators": [1000],
-        "max_depth": [15,20],
+        "n_estimators": cfg['n_estimators'],
+        "max_depth": cfg['max_depth'],
         #"min_samples_split": [2,3],
-        "min_samples_leaf": [10],
+        "min_samples_leaf": cfg['min_samples_leaf'],
     }
 
     gsearch = GridSearchCV(estimator=model,

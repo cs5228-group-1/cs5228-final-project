@@ -204,6 +204,7 @@ class V5(TransformBase):
         ).drop_duplicates(POSITION_ATTRS)
 
     def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        EARLIEST_YEAR = 2021
         reg_dates = pd.to_datetime(
             dataframe['rent_approval_date'], format="%Y-%m")
         dataframe = dataframe\
@@ -225,11 +226,11 @@ class V5(TransformBase):
             ])
         dataframe['date'] = \
             dataframe.parallel_apply(
-                lambda row: row['year'] + row['month'] * 12,
+                lambda row: (row['year'] - EARLIEST_YEAR) * 12 + row['month'],
                 axis=1
             )
         dataframe['age'] = \
-            dataframe.apply(
+            dataframe.parallel_apply(
                 lambda row: row['year'] - row['lease_commence_date'],
                 axis=1
             )
