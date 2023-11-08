@@ -8,7 +8,7 @@ from path import Path
 import matplotlib.pyplot as plt
 
 SETTING_LISTS = [
-    f"setting_{idx}" for idx in range(1, 5)
+    f"setting_{idx}" for idx in range(1, 6)
 ]
 
 
