@@ -8,6 +8,7 @@ import typer
 from omegaconf import OmegaConf
 from typing import Dict
 from sklearn.model_selection import KFold
+import seaborn as sns
 
 # numpy random seed also applies to pandas functions
 np.random.seed(RANDOM_SEED)
@@ -108,6 +109,14 @@ def fit_and_predict(cfg: Dict):
     )
     submission_df.to_csv(submission_file, index=False)
     print(f"Save submission to {submission_file}")
+
+    # plot feature importances
+    feature_importance = trainer.feature_importances_
+    sorted_idx = np.argsort(feature_importance)[::-1]
+    feat_names = np.array(test_df.columns)[sorted_idx]
+    feat_plot = sns.barplot(y=feat_names, x=feature_importance[sorted_idx], hue=feat_names)
+    fig = feat_plot.get_figure()
+    fig.savefig(f"figures/catboost_{cfg.preprocess}_feat_importances.pdf", dpi=350, bbox_inches="tight")
 
 
 def main(
