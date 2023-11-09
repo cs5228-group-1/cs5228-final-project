@@ -8,6 +8,7 @@ import sklearn
 from sklearn.compose import make_column_transformer
 from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from category_encoders.cat_boost import CatBoostEncoder
 from path import Path
 import typer
@@ -39,10 +40,11 @@ def fit_basic_and_predict(cfg: Dict):
         .drop(columns="monthly_rent", errors='ignore')
 
     categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
-
+    numerical_feats = train_df.select_dtypes(include=['float64', 'int64', 'int32']).columns.tolist()
     transformer = make_column_transformer(
         # (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
         (CatBoostEncoder(), categorical_feats),
+        (MinMaxScaler(feature_range=(targets.min(), targets.max())), numerical_feats),
         remainder='passthrough'
     )
 
@@ -80,9 +82,12 @@ def fit_and_predict(cfg: Dict):
         .drop(columns="monthly_rent", errors='ignore')
 
     categorical_feats = train_df.select_dtypes(include=['object']).columns.tolist()
+    numerical_feats = train_df.select_dtypes(include=['float64', 'int64', 'int32']).columns.tolist()
 
     transformer = make_column_transformer(
-        (CatBoostEncoder(), categorical_feats),
+        # (OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_feats),
+        (CatBoostEncoder(), categorical_feats), 
+        (MinMaxScaler(feature_range=(targets.min(), targets.max())), numerical_feats),
         remainder='passthrough'
     )
 
