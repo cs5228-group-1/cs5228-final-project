@@ -1,0 +1,12 @@
+attribute,coefficient
+catboostencoder__block,0.20935089589610614
+catboostencoder__street_name,0.19697442811440205
+catboostencoder__flat_type,0.7103091146334646
+catboostencoder__flat_model,0.050460424292876796
+catboostencoder__subzone,0.15994532940350578
+remainder__floor_area_sqm,32.46615087176823
+remainder__lease_commence_date,3.5155667592860356
+remainder__latitude,-2678.3844967208365
+remainder__longitude,97.48794153334438
+remainder__year,505.3460661090165
+remainder__month,36.98800127964641

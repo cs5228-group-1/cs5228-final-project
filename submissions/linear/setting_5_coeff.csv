@@ -1,0 +1,13 @@
+attribute,coefficient
+catboostencoder__flat_type,0.795174129837372
+catboostencoder__flat_model,0.10720202508824359
+catboostencoder__planning_area,0.2614557612139249
+catboostencoder__nearest_mrt_code,0.23828404121283622
+catboostencoder__nearest_mall_name,0.20282501683886786
+catboostencoder__nearest_school_name,0.1713192859873079
+minmaxscaler__floor_area_sqm,0.03323970671725607
+minmaxscaler__date,0.18981234567382232
+minmaxscaler__age,-0.022253357532009157
+minmaxscaler__nearest_mrt_dist,-0.05176206028329311
+minmaxscaler__nearest_mall_dist,0.014970539455521984
+minmaxscaler__nearest_school_dist,0.03250099822586968

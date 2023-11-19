@@ -1,0 +1,16 @@
+attribute,coefficient
+catboostencoder__block,0.19468073904387054
+catboostencoder__street_name,0.1659841046444345
+catboostencoder__flat_type,0.7108440887517194
+catboostencoder__flat_model,0.06338431726677461
+catboostencoder__subzone,0.09796117444997507
+catboostencoder__nearest_mrt_code,0.037253137710857816
+catboostencoder__nearest_mall_name,0.000514806928184248
+minmaxscaler__floor_area_sqm,0.04729758303512026
+minmaxscaler__lease_commence_date,0.03629195817902221
+minmaxscaler__latitude,-0.08243212750614953
+minmaxscaler__longitude,0.006690029863302771
+minmaxscaler__year,0.151860225886613
+minmaxscaler__month,0.0611965926092933
+minmaxscaler__nearest_mrt_dist,-0.03937638397924706
+minmaxscaler__nearest_mall_dist,-0.012098968822123872
